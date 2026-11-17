@@ -1,48 +1,46 @@
 # compose-desktop-kanban
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![CI](https://github.com/Trysac/u945-compose-desktop-kanban/actions/workflows/ci.yml/badge.svg)](https://github.com/Trysac/u945-compose-desktop-kanban/actions/workflows/ci.yml)
+Kanban board core with keyboard-only drag and drop and screen reader announcements, WIP limits, undo and redo, and crash-safe persistence in a versioned line format.
 
-Kanban board core with keyboard-only drag and drop and screen reader announcements, WIP limits, undo and redo, and crash-safe persistence in a versioned line format
+## The Problem
 
-## Problem
+Desktop kanban boards usually support moving cards only with a mouse, which shuts out keyboard and screen reader users, and they lose data when the app crashes while saving. Compose Multiplatform gives the widgets but not the move model. This library is the UI-free core: a board model, a keyboard drag controller with spoken announcements, undo and redo, and atomic local persistence, so a Compose Desktop window only renders state and forwards keys.
 
-Describe in two or three sentences the concrete problem this utility solves, who hits it, and what
-they do today without it. Replace this paragraph when the first real feature lands.
+## Installation
 
-## Install
-
-Maven coordinates `io.github.trysac:compose-desktop-kanban`. Until it is published to Maven Central, build
-it from a release tag through JitPack (`https://jitpack.io`), then
-declare in `build.gradle.kts`:
+Add the dependency to your `build.gradle.kts` (replace `x.y.z` with the latest version):
 
 ```kotlin
-dependencies {
-    implementation("io.github.trysac:compose-desktop-kanban:0.1.0")
-}
+implementation("io.github.trysac:compose-desktop-kanban:x.y.z")
 ```
-
-Requires Java 21 or newer. No dependencies outside the Kotlin standard library.
 
 ## Usage
 
 ```kotlin
-import io.github.trysac.compose_desktop_kanban.Text
+import io.github.trysac.compose_desktop_kanban.*
 
-// normalize trims surrounding whitespace and lower-cases the text.
-val name = Text.normalize("  Hello World ") // "hello world"
-
-// Blank input is rejected explicitly instead of returning an empty string.
-Text.normalize("   ") // throws BlankInputException ("input is blank")
+val board = Board(listOf(
+    Column("todo", "To do", cards = listOf(Card("c1", "Spec"), Card("c2", "Code"))),
+    Column("doing", "Doing", wipLimit = 2),
+))
+val drag = DragController(board).apply { focus("c2") }
+drag.handle(Key.SPACE)
+drag.handle(Key.RIGHT)
+val res = drag.handle(Key.SPACE) // Dropped card c2 in Doing, position 1 of 1
 ```
 
-## Documentation
+## Public API Summary
 
-- [Architecture](docs/ARCHITECTURE.md) and [decisions](docs/decisions/)
-- [Testing](docs/TESTING.md) and [security](docs/SECURITY.md)
-- [Project record](docs/PROJECT.md) and [stack](docs/STACK.md)
-- [Changelog](CHANGELOG.md) and [contributing guide](CONTRIBUTING.md)
+- **Models**: `Card(id, title)`, `Column(id, title, wipLimit, cards)`, `Board(columns)`.
+- **Commands**: `Command` interface with implementations `MoveCard`, `AddCard`, `RenameCard`, `DeleteCard`, `AddColumn`.
+- **History**: `History(initial, capacity)` for undo/redo via `apply(command)`.
+- **DragController**: `DragController(board)` with `focus(cardId)`, `handle(key)` returning `DragResult`.
+- **Persistence**: `BoardStore(path, fs)` with `load()` and `save(board)`.
+- **Errors**: `BoardException(code, line)` thrown on validation failures, malformed files, or limit violations.
+- **Limits**: 5 MiB file size, 500 characters for titles, 1,000 cards per column.
 
-## License
+## Why not <best-known alternative>?
 
-[MIT](LICENSE) (c) 2026 Miguel Gomez
+Every move is possible and announced from the keyboard, and saves are atomic.
+
+See [docs/SECURITY.md](docs/SECURITY.md) for vulnerability reporting.
