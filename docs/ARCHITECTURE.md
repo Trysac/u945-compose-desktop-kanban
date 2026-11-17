@@ -1,30 +1,24 @@
 # Architecture
 
-## Purpose
+`compose-desktop-kanban` provides the UI-free domain, interaction, and persistence core for an accessible desktop Kanban application.
 
-`io.github.trysac:compose-desktop-kanban` is a small, dependency-free Kotlin library: Kanban board core with keyboard-only drag and drop and screen reader announcements, WIP limits, undo and redo, and crash-safe persistence in a versioned line format
+## Modules and Responsibilities
 
-## Shape
+1. **Domain Model (`Models.kt`, `BoardException.kt`)**
+   - `Card`, `Column`, and `Board` are immutable value types validated upon construction.
+   - All IDs across columns and cards are unique across a `Board` (`duplicate_id`).
+   - Input size limits are enforced at construction and parse time: 500-character titles (`title_too_long`), 1,000 cards per column (`column_too_large`), and 5,242,880 bytes per serialized file (`file_too_large`).
 
-```text
-caller code --> package io.github.trysac.compose_desktop_kanban (src/main/kotlin)
-                    |
-                    +-- objects and top-level functions that are pure; no I/O, no global mutable state
-                    +-- internal or private helpers (optional)
-```
+2. **Reversible Commands & History (`Command.kt`, `History.kt`)**
+   - `Command` is a sealed interface (`MoveCard`, `AddCard`, `RenameCard`, `DeleteCard`, `AddColumn`).
+   - `History` holds an undo deque bounded to `capacity` (default 100) and a redo deque cleared on every new transition.
 
-- **Public API**: every public declaration of the package. `internal` and `private` declarations
-  may change without a major version.
-- **Errors**: invalid input throws an `IllegalArgumentException` subclass of the library (such as
-  `BlankInputException`) documented with `@throws`. The library never prints or exits.
-- **Side effects**: none. If a feature needs I/O, accept an `InputStream`, a `Reader` or a small
-  interface instead of opening resources, and record the choice in an ADR.
+3. **Keyboard Drag Controller (`DragController.kt`)**
+   - State machine tracking `focused`, `dragging`, and the pick-up snapshot.
+   - Moves cards vertically (`UP`/`DOWN`) and horizontally (`LEFT`/`RIGHT`), clamping indices and refusing moves into columns at their `wipLimit`.
+   - Produces deterministic 1-based screen reader announcements for every pick-up, move, WIP refusal, cancellation (`ESCAPE`), and drop (`SPACE`/`ENTER`).
+   - Dropping a card commits a single transition to `History` from the pick-up board to the final board.
 
-## Quality contract
-
-`scripts/Check.java` is the single definition of the gates; `fabrica.json` tells the factory and CI
-how to run it. See [TESTING.md](TESTING.md).
-
-## Decisions
-
-Architecture decisions are recorded in [decisions/](decisions/) as numbered ADRs.
+4. **Crash-Safe Persistence (`BoardStore.kt`, `FileSystemPort.kt`)**
+   - `BoardStore` serializes and parses the line-oriented `kanban-board v1` format.
+   - `FileSystemPort` decouples disk I/O (`NioFileSystem` using `StandardOpenOption.SYNC` and `StandardCopyOption.ATOMIC_MOVE`) from deterministic in-memory tests (`FakeFileSystem`).

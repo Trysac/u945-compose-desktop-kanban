@@ -15,7 +15,8 @@ plugins {
 
 group = "io.github.trysac"
 version = "0.1.0"
-description = "Kanban board core with keyboard-only drag and drop and screen reader announcements, WIP limits, undo and redo, and crash-safe persistence in a versioned line format"
+description =
+    "Kanban board core with keyboard-only drag and drop and screen reader announcements, WIP limits, undo and redo, and crash-safe persistence in a versioned line format"
 
 // Build output; the gates image moves it out of the mounted repository (FABRICA_BUILD_DIR).
 providers.environmentVariable("FABRICA_BUILD_DIR").orNull?.takeIf { it.isNotEmpty() }?.let {

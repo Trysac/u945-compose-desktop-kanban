@@ -9,4 +9,5 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Added immutable Kanban board model, keyboard-only `DragController` with screen reader announcements, 100-entry undo/redo `History`, and atomic `BoardStore` persistence in `kanban-board v1` format.
 - Initial project structure from the factory utility template.
