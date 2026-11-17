@@ -1,0 +1,1 @@
+{"lang": "kotlin", "package": "io.github.trysac:compose-desktop-kanban", "commands": {"install": [["java", "scripts/Gradle.java", "--quiet", "dependencies"]], "check": [["java", "scripts/Check.java"]]}}

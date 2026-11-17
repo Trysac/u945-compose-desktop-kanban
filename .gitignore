@@ -1,0 +1,16 @@
+# Build output and Gradle/Kotlin caches
+/build/
+/.gradle/
+/.kotlin/
+
+# IDE
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# Local environment
+.env
+.env.*
+!.env.example

@@ -1,0 +1,13 @@
+# gitleaks configuration: default rules plus local-only paths that are never committed.
+title = "compose-desktop-kanban gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Local tool output (ignored by git)"
+paths = [
+  '''(^|/)build/''',
+  '''(^|/)\.gradle/''',
+  '''(^|/)\.kotlin/''',
+]

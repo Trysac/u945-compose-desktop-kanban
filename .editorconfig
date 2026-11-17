@@ -1,0 +1,27 @@
+# Factory-owned file: agents must not edit it. Layout of this repository; ktlint (through Spotless)
+# applies and checks it.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+[*.java]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{kt,kts}]
+ktlint_code_style = ktlint_official
+max_line_length = 120
+# The package is io.github.trysac.<module>: the module name keeps the underscores of the utility
+# name, as in Java (legal in Kotlin; ktlint's package-name rule forbids them).
+ktlint_standard_package-name = disabled

@@ -1,0 +1,60 @@
+# Semgrep CE rules owned by the factory (MIT, like this repository). The semgrep gate in scripts/Check.java runs
+# only this file; Semgrep-maintained registry rules are never used (their license forbids distribution and
+# service use). Every rule is ERROR: a match fails the gate. Factory-owned file: agents must not edit it.
+rules:
+  - id: fabrica.kotlin.exec-through-shell
+    languages: [kotlin]
+    severity: ERROR
+    message: Running a command through a shell (sh -c, bash -c, cmd /c) or Runtime.exec allows command injection. Start the program with ProcessBuilder and pass each argument separately.
+    pattern-either:
+      - pattern: ProcessBuilder("sh", "-c", ...)
+      - pattern: ProcessBuilder("bash", "-c", ...)
+      - pattern: ProcessBuilder("/bin/sh", "-c", ...)
+      - pattern: ProcessBuilder("cmd", "/c", ...)
+      - pattern: ProcessBuilder("cmd.exe", "/c", ...)
+      - pattern: ProcessBuilder("powershell", ...)
+      - pattern: Runtime.getRuntime().exec(...)
+  - id: fabrica.kotlin.unsafe-deserialization
+    languages: [kotlin]
+    severity: ERROR
+    message: ObjectInputStream.readObject deserializes arbitrary classes, so untrusted bytes can run code. Parse an explicit format (JSON, a data class of primitives) instead.
+    pattern-either:
+      - pattern: ObjectInputStream(...)
+      - pattern: java.io.ObjectInputStream(...)
+  - id: fabrica.kotlin.tls-verification-disabled
+    languages: [kotlin]
+    severity: ERROR
+    message: TLS certificate or host name verification is disabled (a trust-all X509TrustManager or a HostnameVerifier that accepts every host), so any server can impersonate the real one.
+    pattern-either:
+      - pattern: |
+          object : X509TrustManager {
+            ...
+            override fun checkServerTrusted(...) {}
+            ...
+          }
+      - pattern: |
+          class $C : X509TrustManager {
+            ...
+            override fun checkServerTrusted(...) {}
+            ...
+          }
+      - pattern: $C.setHostnameVerifier { $H, $S -> true }
+      - pattern: HttpsURLConnection.setDefaultHostnameVerifier { $H, $S -> true }
+  - id: fabrica.kotlin.script-engine-eval
+    languages: [kotlin]
+    severity: ERROR
+    message: ScriptEngine.eval runs a string as code. Interpret the input explicitly instead.
+    pattern-either:
+      - pattern: ScriptEngineManager().getEngineByName(...).eval(...)
+      - pattern: (javax.script.ScriptEngine $E).eval(...)
+      - pattern: (ScriptEngine $E).eval(...)
+  - id: fabrica.kotlin.hardcoded-secret
+    languages: [kotlin]
+    severity: ERROR
+    message: A credential (private key, AKIA access key, GitHub, Slack or Stripe token) is hard-coded in the source. Read it from the environment.
+    pattern-either:
+      - pattern-regex: -----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----
+      - pattern-regex: \b(AKIA|ASIA)[0-9A-Z]{16}\b
+      - pattern-regex: \bgh[pousr]_[A-Za-z0-9]{36}\b
+      - pattern-regex: \bxox[baprs]-[A-Za-z0-9-]{10,}\b
+      - pattern-regex: \bsk_live_[A-Za-z0-9]{24,}\b
